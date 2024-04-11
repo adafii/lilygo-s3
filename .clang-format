@@ -8,6 +8,7 @@ UseTab: Never
 ColumnLimit: 120
 
 KeepEmptyLinesAtTheStartOfBlocks: true
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments
 
 SortIncludes: "CaseInsensitive"
 IncludeBlocks: Merge
