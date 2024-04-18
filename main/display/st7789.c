@@ -1,5 +1,7 @@
 #include "common_config.h"
 #include "display/config.h"
+#include "driver/gpio.h"
+#include "driver/ledc.h"
 #include "driver/spi_master.h"
 #include "esp_err.h"
 #include "esp_lcd_panel_io.h"
@@ -8,6 +10,10 @@
 #include "esp_log.h"
 
 static const char* TAG = "ST7789";
+
+static void init_st7789_backlight();
+
+// Public API
 
 void init_st7789_display(esp_lcd_panel_handle_t* panel_handle) {
     ESP_LOGI(TAG, "Initializing SPI bus");
@@ -41,4 +47,45 @@ void init_st7789_display(esp_lcd_panel_handle_t* panel_handle) {
         .bits_per_pixel = 16,
     };
     ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(io_handle, &panel_config, panel_handle));
+}
+
+void set_backlight_level(uint8_t level) {
+    static bool is_initialized = false;
+    if (!is_initialized) {
+        init_st7789_backlight();
+    }
+
+    if(level > 100) {
+        ESP_LOGW(TAG, "Backlight level %d is over 100%%", level);
+        level = 100;
+    }
+
+    uint32_t duty = level * LCD_BL_MAX_DUTY / 100;
+    ESP_LOGI(TAG, "Setting backlight to %d%% (duty %lu)", level, duty);
+
+    ledc_set_duty(LCD_BL_MODE, LCD_BL_CHANNEL, duty);
+    ledc_update_duty(LCD_BL_MODE, LCD_BL_CHANNEL);
+}
+
+// Internal API
+
+static void init_st7789_backlight() {
+    gpio_set_direction(LCD_BL, GPIO_MODE_OUTPUT);
+
+    ESP_LOGI(TAG, "Initializing LCD backlight led controller");
+    ledc_timer_config_t bl_ledc_timer = {.speed_mode = LCD_BL_MODE,
+                                         .timer_num = LCD_BL_TIMER,
+                                         .duty_resolution = LCD_BL_DUTY_RES,
+                                         .freq_hz = LCD_BL_FREQUENCY_HZ,
+                                         .clk_cfg = LEDC_AUTO_CLK};
+    ESP_ERROR_CHECK(ledc_timer_config(&bl_ledc_timer));
+
+    ledc_channel_config_t bl_ledc_channel = {.speed_mode = LCD_BL_MODE,
+                                             .channel = LCD_BL_CHANNEL,
+                                             .timer_sel = LCD_BL_TIMER,
+                                             .intr_type = LEDC_INTR_DISABLE,
+                                             .gpio_num = LCD_BL,
+                                             .duty = 0,
+                                             .hpoint = 0};
+    ESP_ERROR_CHECK(ledc_channel_config(&bl_ledc_channel));
 }
