@@ -1,7 +1,7 @@
 #pragma once
 
-#define LCD_WIDTH             240
-#define LCD_HEIGHT            240
+#define LCD_WIDTH_PX          240
+#define LCD_HEIGHT_PX         240
 
 #define LCD_BL                GPIO_NUM_45
 #define LCD_MISO              -1

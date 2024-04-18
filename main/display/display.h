@@ -5,7 +5,7 @@
  * Install panel driver and get the panel handle
  * @param[out] panel_handle Panel handle
  */
-void init_st7789_display(esp_lcd_panel_handle_t* panel_handle);
+void init_display(esp_lcd_panel_handle_t* panel_handle);
 
 /**
  * Set display backlight level

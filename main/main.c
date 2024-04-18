@@ -1,7 +1,12 @@
-#include "display/st7789.h"
+#include "display/display.h"
+#include "gui/gui.h"
+
+static lv_display_t* display = NULL;
+static esp_lcd_panel_handle_t panel_handle = NULL;
 
 void app_main() {
-    esp_lcd_panel_handle_t panel_handle = NULL;
-    init_st7789_display(&panel_handle);
-    set_backlight_level(100);
+    init_display(&panel_handle);
+    set_backlight_level(10);
+
+    init_gui(&panel_handle, display);
 }

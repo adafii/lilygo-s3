@@ -5,17 +5,18 @@
 #include "driver/spi_master.h"
 #include "esp_err.h"
 #include "esp_lcd_panel_io.h"
+#include "esp_lcd_panel_ops.h"
 #include "esp_lcd_panel_vendor.h"
 #include "esp_lcd_types.h"
 #include "esp_log.h"
 
-static const char* TAG = "ST7789";
+static const char* TAG = "Display";
 
-static void init_st7789_backlight();
+static void init_display_backlight();
 
 // Public API
 
-void init_st7789_display(esp_lcd_panel_handle_t* panel_handle) {
+void init_display(esp_lcd_panel_handle_t* panel_handle) {
     ESP_LOGI(TAG, "Initializing SPI bus");
     const spi_bus_config_t bus_config = {
         .sclk_io_num = LCD_SCLK,
@@ -23,7 +24,7 @@ void init_st7789_display(esp_lcd_panel_handle_t* panel_handle) {
         .miso_io_num = LCD_MISO,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
-        .max_transfer_sz = LCD_WIDTH * 80 * sizeof(uint16_t),
+        .max_transfer_sz = LCD_WIDTH_PX * 80 * sizeof(uint16_t),
     };
     ESP_ERROR_CHECK(spi_bus_initialize(LCD_SPI_HOST, &bus_config, SPI_DMA_CH_AUTO));
 
@@ -47,15 +48,18 @@ void init_st7789_display(esp_lcd_panel_handle_t* panel_handle) {
         .bits_per_pixel = 16,
     };
     ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(io_handle, &panel_config, panel_handle));
+
+    ESP_ERROR_CHECK(esp_lcd_panel_reset(*panel_handle));
+    ESP_ERROR_CHECK(esp_lcd_panel_init(*panel_handle));
 }
 
 void set_backlight_level(uint8_t level) {
     static bool is_initialized = false;
     if (!is_initialized) {
-        init_st7789_backlight();
+        init_display_backlight();
     }
 
-    if(level > 100) {
+    if (level > 100) {
         ESP_LOGW(TAG, "Backlight level %d is over 100%%", level);
         level = 100;
     }
@@ -69,7 +73,7 @@ void set_backlight_level(uint8_t level) {
 
 // Internal API
 
-static void init_st7789_backlight() {
+static void init_display_backlight() {
     gpio_set_direction(LCD_BL, GPIO_MODE_OUTPUT);
 
     ESP_LOGI(TAG, "Initializing LCD backlight led controller");
