@@ -49,8 +49,10 @@ void init_display(esp_lcd_panel_handle_t* panel_handle) {
     };
     ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(io_handle, &panel_config, panel_handle));
 
+    ESP_LOGI(TAG, "Turning display on");
     ESP_ERROR_CHECK(esp_lcd_panel_reset(*panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(*panel_handle));
+    ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(*panel_handle, true));
 }
 
 void set_backlight_level(uint8_t level) {
@@ -65,7 +67,7 @@ void set_backlight_level(uint8_t level) {
     }
 
     uint32_t duty = level * LCD_BL_MAX_DUTY / 100;
-    ESP_LOGI(TAG, "Setting backlight to %d%% (duty %lu)", level, duty);
+    ESP_LOGI(TAG, "Setting backlight to %d%%", level);
 
     ledc_set_duty(LCD_BL_MODE, LCD_BL_CHANNEL, duty);
     ledc_update_duty(LCD_BL_MODE, LCD_BL_CHANNEL);

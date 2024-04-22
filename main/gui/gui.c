@@ -39,6 +39,16 @@ void init_gui(esp_lcd_panel_handle_t* panel_handle, lv_display_t* display) {
     xTaskCreatePinnedToCore(gui_task, "gui", LVGL_TASK_STACK_SIZE, NULL, LVGL_TASK_PRIORITY, NULL, APP_CPU_NUM);
 }
 
+void hello_world() {
+    ESP_LOGI(TAG, "Hello world display test");
+    lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x000000), LV_PART_MAIN);
+
+    lv_obj_t* label = lv_label_create(lv_screen_active());
+    lv_label_set_text(label, "Hello, World!");
+    lv_obj_set_style_text_color(lv_screen_active(), lv_color_hex(0xffffff), LV_PART_MAIN);
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+}
+
 // Internal API
 
 static void init_lvgl_tick_timer() {
