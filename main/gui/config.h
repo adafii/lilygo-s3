@@ -8,3 +8,4 @@
 
 #define LVGL_TASK_STACK_SIZE   (4 * 1024)
 #define LVGL_TASK_PRIORITY     0
+#define LVGL_TASK_MAX_DELAY_MS 500
