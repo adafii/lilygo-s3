@@ -43,7 +43,7 @@ void init_gui(esp_lcd_panel_handle_t* panel_handle, lv_display_t* display) {
 }
 
 void hello_world() {
-    if(xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
+    if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
         ESP_LOGI(TAG, "Hello world display test");
         lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x000000), LV_PART_MAIN);
 
@@ -97,7 +97,7 @@ static void gui_task(void* arg) {
     uint32_t task_delay_ms = LVGL_TASK_MAX_DELAY_MS;
 
     while (1) {
-        if(xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
+        if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
             task_delay_ms = lv_timer_handler();
             xSemaphoreGive(lvgl_mutex);
         }

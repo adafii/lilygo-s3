@@ -1,0 +1,7 @@
+#pragma once
+
+#define MAIN_LOOP_QUEUE_SIZE 20
+#define MAIN_LOOP_TASK_NAME "Main event loop"
+#define MAIN_LOOP_TASK_PRIORITY 10
+#define MAIN_LOOP_STACK_SIZE (10 * 1024)
+#define MAIN_LOOP_CODE_ID APP_CPU_NUM
