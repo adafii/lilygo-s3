@@ -10,7 +10,7 @@
 #include "gui/config.h"
 #include "lvgl.h"
 
-static const char* TAG = "GUI";
+static const char* TAG = "gui";
 static SemaphoreHandle_t lvgl_mutex = NULL;
 
 static void init_lvgl_tick_timer();

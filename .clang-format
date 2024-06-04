@@ -1,6 +1,6 @@
 ---
 Language: Cpp
-BasedOnStyle: Chromium 
+BasedOnStyle: Chromium
 
 AccessModifierOffset: -4
 IndentWidth: 4
@@ -9,6 +9,8 @@ ColumnLimit: 120
 
 KeepEmptyLinesAtTheStartOfBlocks: true
 AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AlignAfterOpenBracket: BlockIndent
+Cpp11BracedListStyle: true
 
 SortIncludes: "CaseInsensitive"
 IncludeBlocks: Merge
