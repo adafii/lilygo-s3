@@ -1,5 +1,4 @@
-#include "common_config.h"
-#include "display/config.h"
+#include "hardware/config.h"
 #include "driver/gpio.h"
 #include "driver/ledc.h"
 #include "driver/spi_master.h"

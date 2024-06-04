@@ -24,3 +24,5 @@
 #define LCD_BL_DUTY_RES       LEDC_TIMER_13_BIT
 #define LCD_BL_FREQUENCY_HZ   4000
 #define LCD_BL_MAX_DUTY       8192  // 2 ^ duty resolution
+
+#define LCD_SPI_HOST          SPI2_HOST

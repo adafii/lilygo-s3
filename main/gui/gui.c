@@ -1,5 +1,5 @@
 #include "gui.h"
-#include "display/config.h"
+#include "hardware/config.h"
 #include "driver/gptimer.h"
 #include "esp_heap_caps.h"
 #include "esp_lcd_panel_ops.h"
@@ -45,11 +45,11 @@ void init_gui(esp_lcd_panel_handle_t* panel_handle, lv_display_t* display) {
 void hello_world() {
     if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
         ESP_LOGI(TAG, "Hello world display test");
-        lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0x000000), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0xffffff), LV_PART_MAIN);
 
         lv_obj_t* label = lv_label_create(lv_screen_active());
         lv_label_set_text(label, "Hello, World!");
-        lv_obj_set_style_text_color(lv_screen_active(), lv_color_hex(0xffffff), LV_PART_MAIN);
+        lv_obj_set_style_text_color(lv_screen_active(), lv_color_hex(0x000000), LV_PART_MAIN);
         lv_obj_align(label, LV_ALIGN_OUT_LEFT_TOP, 10, 10);
         xSemaphoreGive(lvgl_mutex);
     }
@@ -96,7 +96,7 @@ static void gui_task(void* arg) {
     ESP_LOGI(TAG, "GUI task started");
     uint32_t task_delay_ms = LVGL_TASK_MAX_DELAY_MS;
 
-    while (1) {
+    while (true) {
         if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
             task_delay_ms = lv_timer_handler();
             xSemaphoreGive(lvgl_mutex);

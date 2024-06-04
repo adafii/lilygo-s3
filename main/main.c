@@ -1,4 +1,4 @@
-#include "display/display.h"
+#include "hardware/display.h"
 #include "gui/gui.h"
 
 static lv_display_t* display = NULL;

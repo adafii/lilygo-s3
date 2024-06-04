@@ -1,5 +1,5 @@
 #pragma once
-#include "display/config.h"
+#include "hardware/config.h"
 
 #define LVGL_TIMER_RESOLUTION_HZ (1 * 1000 * 1000)
 #define LVGL_TIMER_MS_COUNT      1000
