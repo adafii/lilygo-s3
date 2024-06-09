@@ -1,3 +1,4 @@
+#include "hardware/display.h"
 #include "driver/gpio.h"
 #include "driver/ledc.h"
 #include "driver/spi_master.h"

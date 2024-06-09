@@ -38,5 +38,18 @@
 #define RTC_INTERRUPT           17
 #define RTC_GLITCH_IGNORE_COUNT 7
 #define RTC_I2C_ADDRESS         0x51  // 0xA2 >> 1
-#define RTC_I2C_CLK_SPEED_HZ    100 * 1000
-#define RTC_PROBE_TIMEOUT_MS    100
+#define RTC_I2C_CLK_SPEED_HZ    (100 * 1000)
+#define RTC_PROBE_TIMEOUT_MS    1000
+#define RTC_RW_TIMEOUT_MS       1000
+
+typedef enum : uint8_t {
+    CONTROL1,
+    CONTROL2,
+    VL_SECONDS,
+    MINUTES,
+    HOURS,
+    DAYS,
+    WEEKDAYS,
+    CENTURY_MONTHS,
+    YEARS,
+} rtc_register_address_t;

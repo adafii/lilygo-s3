@@ -1,5 +1,4 @@
 #include "gui.h"
-#include "hardware/config.h"
 #include "driver/gptimer.h"
 #include "esp_heap_caps.h"
 #include "esp_lcd_panel_ops.h"
@@ -8,11 +7,12 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "gui/config.h"
+#include "hardware/config.h"
 #include "lvgl.h"
 
 static const char* TAG = "gui";
-static SemaphoreHandle_t lvgl_mutex = NULL;
 
+static SemaphoreHandle_t lvgl_mutex = NULL;
 static void init_lvgl_tick_timer();
 static bool lvgl_timer_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t* edata, void* user_ctx);
 static void flush_cb(lv_display_t* display, const lv_area_t* area, uint8_t* px_map);
@@ -33,8 +33,7 @@ void init_gui(esp_lcd_panel_handle_t* panel_handle, lv_display_t* display) {
     lv_color_t* buffer1 = heap_caps_malloc(LVGL_DISPLAY_BUFFER_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA);
     lv_color_t* buffer2 = heap_caps_malloc(LVGL_DISPLAY_BUFFER_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA);
     assert(buffer1 && buffer2);
-    lv_display_set_buffers(display, buffer1, buffer2, LVGL_DISPLAY_BUFFER_SIZE * sizeof(lv_color_t),
-                           LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(display, buffer1, buffer2, LVGL_DISPLAY_BUFFER_SIZE * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL);
 
     lv_display_set_flush_cb(display, flush_cb);
 
@@ -69,9 +68,9 @@ static void init_lvgl_tick_timer() {
 
     ESP_ERROR_CHECK(gptimer_new_timer(&timer_config, &gptimer));
 
-    gptimer_alarm_config_t alarm_config = {.alarm_count = LVGL_TICK_PERIOD_MS * LVGL_TIMER_MS_COUNT,
-                                           .reload_count = 0,
-                                           .flags.auto_reload_on_alarm = true};
+    gptimer_alarm_config_t alarm_config = {
+        .alarm_count = LVGL_TICK_PERIOD_MS * LVGL_TIMER_MS_COUNT, .reload_count = 0, .flags.auto_reload_on_alarm = true
+    };
     ESP_ERROR_CHECK(gptimer_set_alarm_action(gptimer, &alarm_config));
 
     gptimer_event_callbacks_t timer_cb = {.on_alarm = lvgl_timer_cb};
