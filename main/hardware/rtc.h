@@ -1,10 +1,9 @@
 #pragma once
-#include "rtc_types.h"
+#include <time.h>
 
 /**
- * Initialize Real Time Clock
- * @param rtc_handle RTC handle
+ * Init RTC by setting local timezone environment variable, TZ
  */
-void init_rtc(rtc_handle_t* rtc_handle);
+void init_rtc();
 
-rtc_time_t rtc_get_time(rtc_handle_t* rtc_handle);
+time_t rtc_get_time();
