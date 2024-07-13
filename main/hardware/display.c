@@ -16,7 +16,9 @@ static void init_display_backlight();
 
 // Public API
 
-void init_display(esp_lcd_panel_handle_t* panel_handle) {
+void init_display(hardware_context_t* hardware_context) {
+    esp_lcd_panel_handle_t* panel_handle = &hardware_context->panel_handle;
+
     ESP_LOGI(TAG, "Initializing LCD");
     const spi_bus_config_t bus_config = {
         .sclk_io_num = LCD_SCLK,
@@ -47,7 +49,7 @@ void init_display(esp_lcd_panel_handle_t* panel_handle) {
     };
     ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(io_handle, &panel_config, panel_handle));
 
-    ESP_LOGI(TAG, "Turning display on");
+    ESP_LOGI(TAG, "Turning LCD on");
     ESP_ERROR_CHECK(esp_lcd_panel_reset(*panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(*panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(*panel_handle, true));

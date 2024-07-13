@@ -1,4 +1,5 @@
 #include "gui.h"
+#include "common/event_types.h"
 #include "driver/gptimer.h"
 #include "esp_heap_caps.h"
 #include "esp_lcd_panel_ops.h"
@@ -6,52 +7,96 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "gui/config.h"
 #include "hardware/config.h"
+#include "hardware/display.h"
 #include "lvgl.h"
 
 static const char* TAG = "gui";
 
-static SemaphoreHandle_t lvgl_mutex = NULL;
 static void init_lvgl_tick_timer();
 static bool lvgl_timer_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t* edata, void* user_ctx);
 static void flush_cb(lv_display_t* display, const lv_area_t* area, uint8_t* px_map);
-static void gui_task(void* arg);
+static void gui_task(void* task_context);
 
 // Public API
 
-void init_gui(esp_lcd_panel_handle_t* panel_handle, lv_display_t* display) {
+void init_gui(hardware_context_t* hardware_context, gui_context_t* gui_context) {
     ESP_LOGI(TAG, "Initializing LVGL library");
 
-    lvgl_mutex = xSemaphoreCreateMutex();
+    gui_context->lvgl_mutex = xSemaphoreCreateMutex();
 
     init_lvgl_tick_timer();
     lv_init();
-    display = lv_display_create(LCD_WIDTH_PX, LCD_HEIGHT_PX);
-    lv_display_set_user_data(display, panel_handle);
+    gui_context->display = lv_display_create(LCD_WIDTH_PX, LCD_HEIGHT_PX);
+    assert(gui_context->display);
+    lv_display_set_user_data(gui_context->display, &hardware_context->panel_handle);
 
     lv_color_t* buffer1 = heap_caps_malloc(LVGL_DISPLAY_BUFFER_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA);
     lv_color_t* buffer2 = heap_caps_malloc(LVGL_DISPLAY_BUFFER_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA);
-    assert(buffer1 && buffer2);
-    lv_display_set_buffers(display, buffer1, buffer2, LVGL_DISPLAY_BUFFER_SIZE * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL);
 
-    lv_display_set_flush_cb(display, flush_cb);
+    assert(buffer1 && buffer2);
+    lv_display_set_buffers(
+        gui_context->display, buffer1, buffer2, LVGL_DISPLAY_BUFFER_SIZE * sizeof(lv_color_t), LV_DISPLAY_RENDER_MODE_PARTIAL
+    );
+
+    lv_display_set_flush_cb(gui_context->display, flush_cb);
 
     ESP_LOGI(TAG, "Starting GUI task on CPU %d", APP_CPU_NUM);
-    xTaskCreatePinnedToCore(gui_task, "gui", LVGL_TASK_STACK_SIZE, NULL, LVGL_TASK_PRIORITY, NULL, APP_CPU_NUM);
+    xTaskCreatePinnedToCore(gui_task, "gui", LVGL_TASK_STACK_SIZE, &gui_context->lvgl_mutex, LVGL_TASK_PRIORITY, NULL, APP_CPU_NUM);
 }
 
-void hello_world() {
-    if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
-        ESP_LOGI(TAG, "Hello world display test");
-        lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(0xffffff), LV_PART_MAIN);
+void start_gui(gui_context_t* gui_context) {
+    ESP_LOGI(TAG, "Starting the first GUI app");
 
-        lv_obj_t* label = lv_label_create(lv_screen_active());
-        lv_label_set_text(label, "Hello, World!");
-        lv_obj_set_style_text_color(lv_screen_active(), lv_color_hex(0x000000), LV_PART_MAIN);
-        lv_obj_align(label, LV_ALIGN_OUT_LEFT_TOP, 10, 10);
-        xSemaphoreGive(lvgl_mutex);
+    if (gui_context->registered_apps > 0) {
+        set_backlight_level(100);
+        gui_app_t* first_app = &gui_context->gui_apps[0];
+        first_app->show_app(first_app);
     }
+}
+
+void gui_register_app(gui_app_t* app) {
+    gui_context_t* gui_context = app->gui_context;
+
+    if (gui_context->registered_apps >= GUI_MAX_APPS) {
+        ESP_LOGE(TAG, "Could not register app '%s' anymore, maximum number of apps is %d", app->name, GUI_MAX_APPS);
+        return;
+    }
+
+    ESP_LOGI(TAG, "Registering new app: %s", app->name);
+
+    const int32_t current_index = gui_context->registered_apps;
+    memcpy(&gui_context->gui_apps[current_index], app, sizeof(gui_context->gui_apps[current_index]));
+    ++gui_context->registered_apps;
+
+    app->init_app(&gui_context->gui_apps[current_index]);
+}
+
+void gui_change_app(void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+    gui_context_t* gui_context = event_handler_arg;
+
+    if (gui_context->registered_apps == 0 || gui_context->registered_apps == 1) {
+        ESP_LOGW(TAG, "Could not select the next GUI app. Number of apps currently registered: %ld", gui_context->registered_apps);
+        return;
+    }
+
+    gui_app_t* previous_app = &gui_context->gui_apps[gui_context->current_app_index];
+
+    if (event_id == NEXT_APP) {
+        gui_context->current_app_index = (gui_context->current_app_index + 1) % gui_context->registered_apps;
+    } else if (event_id == PREVIOUS_APP) {
+        gui_context->current_app_index = (gui_context->current_app_index - 1 + gui_context->registered_apps) % gui_context->registered_apps;
+    } else {
+        ESP_LOGE(TAG, "Unknown event ID: %ld", event_id);
+        return;
+    }
+
+    gui_app_t* next_app = &gui_context->gui_apps[gui_context->current_app_index];
+
+    ESP_LOGI(TAG, "Changing app: %s -> %s", previous_app->name, next_app->name);
+
+    previous_app->hide_app(previous_app);
+    next_app->show_app(next_app);
 }
 
 // Internal API
@@ -91,14 +136,16 @@ static void flush_cb(lv_display_t* display, const lv_area_t* area, uint8_t* px_m
     lv_display_flush_ready(display);
 }
 
-static void gui_task(void* arg) {
+static void gui_task(void* task_context) {
     ESP_LOGI(TAG, "GUI task started");
+
+    SemaphoreHandle_t* lvgl_mutex = task_context;
     uint32_t task_delay_ms = LVGL_TASK_MAX_DELAY_MS;
 
     while (true) {
-        if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
+        if (xSemaphoreTake(*lvgl_mutex, portMAX_DELAY) == pdTRUE) {
             task_delay_ms = lv_timer_handler();
-            xSemaphoreGive(lvgl_mutex);
+            xSemaphoreGive(*lvgl_mutex);
         }
         vTaskDelay(pdMS_TO_TICKS(task_delay_ms));
     }
